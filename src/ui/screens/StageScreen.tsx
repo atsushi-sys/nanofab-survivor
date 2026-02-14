@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { GameRuntime } from '../../game/engine/runtime';
+import { UPGRADES } from '../../game/data/upgrades';
 import { renderGame } from '../../game/engine/render';
+import { GameRuntime } from '../../game/engine/runtime';
 import { GameState } from '../../game/engine/state';
 import { MetaUpgradeState } from '../../game/types';
-import { HUD } from '../components/HUD';
+import { HUD, HudDebugInfo } from '../components/HUD';
 import { Joystick } from '../components/Joystick';
 import { UpgradeModal } from '../components/UpgradeModal';
-import { UPGRADES } from '../../game/data/upgrades';
 
 interface Props {
   seed: number;
@@ -20,35 +20,74 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
   const [state, setState] = useState<GameState | null>(null);
   const [choices, setChoices] = useState<string[] | null>(null);
   const [showBuild, setShowBuild] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<HudDebugInfo | undefined>(undefined);
 
   useEffect(() => {
     const runtime = new GameRuntime(seed, meta, {
-      onState: (s) => setState({ ...s }),
-      onUpgradeOffer: (c) => setChoices(c),
-      onResult: (s) => onFinish({ win: s.result === 'win', time: s.time, level: s.level, kills: s.kills, coins: s.runCoins, gems: s.runGems, seed: s.seed }),
+      onState: (nextState) => setState({ ...nextState }),
+      onUpgradeOffer: (nextChoices) => setChoices(nextChoices),
+      onResult: (resultState) => {
+        onFinish({
+          win: resultState.result === 'win',
+          time: resultState.time,
+          level: resultState.level,
+          kills: resultState.kills,
+          coins: resultState.runCoins,
+          gems: resultState.runGems,
+          seed: resultState.seed,
+        });
+      },
     });
+
     runtimeRef.current = runtime;
     setState({ ...runtime.state });
 
-    let acc = 0;
-    let last = performance.now();
-    let raf = 0;
+    let running = true;
+    let rafId: number | null = null;
+    let accumulator = 0;
+    let lastTime = 0;
+    let lastDtMs = 0;
     const fixed = 1 / 60;
 
     const tick = (now: number) => {
-      const rt = runtimeRef.current;
+      if (!running) return;
+
       const canvas = canvasRef.current;
-      if (!rt || !canvas) return;
-      const dt = Math.min(0.1, (now - last) / 1000);
-      last = now;
-      acc += dt;
-      while (acc >= fixed) {
-        for (let i = 0; i < rt.state.speed; i += 1) rt.step(fixed);
-        acc -= fixed;
+      const rt = runtimeRef.current;
+
+      if (lastTime === 0) lastTime = now;
+      const dtSec = Math.min(0.1, (now - lastTime) / 1000);
+      lastTime = now;
+      lastDtMs = dtSec * 1000;
+      accumulator += dtSec;
+
+      if (rt) {
+        const speed = rt.state.speed === 2 ? 2 : 1;
+        while (accumulator >= fixed) {
+          for (let i = 0; i < speed; i += 1) rt.step(fixed);
+          accumulator -= fixed;
+        }
+
+        if (import.meta.env.DEV) {
+          setDebugInfo({
+            running,
+            paused: rt.state.paused,
+            elapsedTimeSec: rt.state.time,
+            lastDtMs,
+            enemyCount: rt.state.enemies.length,
+            projectileCount: rt.state.projectiles.length,
+            pickupCount: rt.state.orbs.length,
+            spawnAccumulator: rt.state.spawnAccumulator,
+          });
+        }
+
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) renderGame(ctx, rt.state, canvas.width, canvas.height);
+        }
       }
-      const ctx = canvas.getContext('2d');
-      if (ctx) renderGame(ctx, rt.state, canvas.width, canvas.height);
-      raf = requestAnimationFrame(tick);
+
+      rafId = requestAnimationFrame(tick);
     };
 
     const resize = () => {
@@ -57,14 +96,12 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
-    resize();
-    window.addEventListener('resize', resize);
-    raf = requestAnimationFrame(tick);
 
-    const key = (e: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       const rt = runtimeRef.current;
       if (!rt) return;
       const m = rt.state.movementInput;
+
       if (e.type === 'keydown') {
         if (e.key === 'w' || e.key === 'ArrowUp') m.y = -1;
         if (e.key === 's' || e.key === 'ArrowDown') m.y = 1;
@@ -74,19 +111,29 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
         if (e.key === '1') rt.state.speed = 1;
         if (e.key === '2') rt.state.speed = 2;
       }
+
       if (e.type === 'keyup') {
-        if ((e.key === 'w' || e.key === 'ArrowUp' || e.key === 's' || e.key === 'ArrowDown')) m.y = 0;
-        if ((e.key === 'a' || e.key === 'ArrowLeft' || e.key === 'd' || e.key === 'ArrowRight')) m.x = 0;
+        if (e.key === 'w' || e.key === 'ArrowUp' || e.key === 's' || e.key === 'ArrowDown') m.y = 0;
+        if (e.key === 'a' || e.key === 'ArrowLeft' || e.key === 'd' || e.key === 'ArrowRight') m.x = 0;
       }
     };
 
-    window.addEventListener('keydown', key);
-    window.addEventListener('keyup', key);
+    resize();
+    window.addEventListener('resize', resize);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKey);
+
+    runtime.state.paused = false;
+    runtime.state.speed = runtime.state.speed === 2 ? 2 : 1;
+    rafId = requestAnimationFrame(tick);
+
     return () => {
-      cancelAnimationFrame(raf);
+      running = false;
+      if (rafId !== null) cancelAnimationFrame(rafId);
       window.removeEventListener('resize', resize);
-      window.removeEventListener('keydown', key);
-      window.removeEventListener('keyup', key);
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onKey);
+      runtimeRef.current = null;
     };
   }, [meta, onFinish, seed]);
 
@@ -95,8 +142,25 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
   return (
     <div className="stage">
       <canvas ref={canvasRef} />
-      <HUD state={state} onPause={() => { if (runtimeRef.current) runtimeRef.current.state.paused = !runtimeRef.current.state.paused; }} onSpeed={() => { if (runtimeRef.current) runtimeRef.current.state.speed = runtimeRef.current.state.speed === 1 ? 2 : 1; }} />
+      <HUD
+        state={state}
+        onPause={() => {
+          const runtime = runtimeRef.current;
+          if (!runtime) return;
+          runtime.state.paused = !runtime.state.paused;
+          setState({ ...runtime.state });
+        }}
+        onSpeed={() => {
+          const runtime = runtimeRef.current;
+          if (!runtime) return;
+          runtime.state.speed = runtime.state.speed === 1 ? 2 : 1;
+          setState({ ...runtime.state });
+        }}
+        debugInfo={import.meta.env.DEV ? debugInfo : undefined}
+      />
+
       <Joystick onMove={(x, y) => { if (runtimeRef.current) runtimeRef.current.state.movementInput = { x, y }; }} />
+
       <button className="build-toggle" onClick={() => setShowBuild((v: boolean) => !v)}>ビルド</button>
       {showBuild && (
         <div className="build-panel">
@@ -105,6 +169,7 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
           ))}
         </div>
       )}
+
       {choices && (
         <UpgradeModal
           choices={choices}

@@ -1,12 +1,12 @@
 import { WEAPONS } from '../data/weapons';
-import { PRNG } from './prng';
-import { createInitialState, GameState } from './state';
-import { updateSpawner } from '../systems/spawner';
-import { updateMovement } from '../systems/movement';
 import { updateCombat } from '../systems/combat';
+import { updateMovement } from '../systems/movement';
 import { updatePickups } from '../systems/pickups';
+import { updateSpawner } from '../systems/spawner';
 import { applyUpgrade, rollUpgradeChoices } from '../systems/upgrades';
 import { MetaUpgradeState } from '../types';
+import { createInitialState, GameState } from './state';
+import { PRNG } from './prng';
 
 export interface RuntimeCallbacks {
   onState: (state: GameState) => void;
@@ -37,15 +37,28 @@ export class GameRuntime {
     this.state.playerStats.damageBonus += meta.damage * 0.04;
     this.state.playerStats.xpGain += meta.xp * 0.05;
     this.state.player.hp = this.state.playerStats.maxHp;
+
+    this.state.paused = false;
+    this.state.speed = this.state.speed === 2 ? 2 : 1;
   }
 
   step(dt: number): void {
-    if (this.state.paused || this.state.result) return;
+    if (this.state.result) {
+      this.callbacks.onState(this.state);
+      return;
+    }
+
+    if (this.state.paused) {
+      this.callbacks.onState(this.state);
+      return;
+    }
+
     if (this.state.pendingUpgradeChoices) {
       if (this.state.pendingUpgradeChoices.length === 0) {
         this.state.pendingUpgradeChoices = rollUpgradeChoices(this.state, this.prng);
         this.callbacks.onUpgradeOffer(this.state.pendingUpgradeChoices);
       }
+      this.callbacks.onState(this.state);
       return;
     }
 
@@ -59,6 +72,7 @@ export class GameRuntime {
       if (this.state.result === 'win') this.state.runCoins += 80;
       this.callbacks.onResult(this.state);
     }
+
     this.callbacks.onState(this.state);
   }
 
@@ -66,6 +80,7 @@ export class GameRuntime {
     if (!this.state.pendingUpgradeChoices) return;
     applyUpgrade(this.state, id);
     this.state.pendingUpgradeChoices = null;
+    this.callbacks.onState(this.state);
   }
 
   reroll(): boolean {
@@ -74,6 +89,7 @@ export class GameRuntime {
     this.state.runGems -= 1;
     this.state.pendingUpgradeChoices = rollUpgradeChoices(this.state, this.prng);
     this.callbacks.onUpgradeOffer(this.state.pendingUpgradeChoices);
+    this.callbacks.onState(this.state);
     return true;
   }
 }

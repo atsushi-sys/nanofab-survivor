@@ -73,6 +73,7 @@ export interface GameState {
   unlocks: RuntimeUnlocks;
   result: null | 'win' | 'lose';
   nextEntityId: number;
+  spawnAccumulator: number;
 }
 
 export function initialPlayerStats(): PlayerStats {
@@ -133,6 +134,7 @@ export function createInitialState(seed: number): GameState {
     unlocks: { orbit: false, cone: false, shockwave: false },
     result: null,
     nextEntityId: 1,
+    spawnAccumulator: 0,
   };
 }
 
