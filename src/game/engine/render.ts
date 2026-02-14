@@ -2,7 +2,7 @@ import { clamp } from './math';
 import { GameState } from './state';
 
 export interface RenderOptions {
-  showHpBars: boolean;
+  showEnemyHp: boolean;
   showDamageText: boolean;
 }
 
@@ -63,6 +63,7 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, w: n
     ctx.arc(sx, sy, sr(e.radius), 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#fff';
+
     if (e.marker === 'fast') ctx.fillRect(sx - sr(2), sy - sr(e.radius) - sr(5), sr(4), sr(4));
     if (e.marker === 'tank') {
       ctx.beginPath();
@@ -78,16 +79,15 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, w: n
       ctx.fill();
     }
 
-    if (options.showHpBars && e.hpBarTimer > 0) {
-      const hpRatio = clamp(e.hp / e.maxHp, 0, 1);
-      const barW = sr(22);
-      const barH = sr(3.5);
-      const bx = sx - barW / 2;
-      const by = sy - sr(e.radius) - sr(10);
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(bx, by, barW, barH);
-      ctx.fillStyle = '#22c55e';
-      ctx.fillRect(bx, by, barW * hpRatio, barH);
+    if (options.showEnemyHp && (e.hpDisplayTimer > 0 || e.isElite)) {
+      const hpText = `${Math.ceil(clamp(e.hp, 0, e.maxHp))}/${Math.ceil(e.maxHp)}`;
+      ctx.textAlign = 'center';
+      ctx.font = `${Math.max(10, sr(11))}px system-ui`;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#020617';
+      ctx.strokeText(hpText, sx, sy - sr(e.radius + 12));
+      ctx.fillStyle = e.isElite ? '#fde68a' : '#e2e8f0';
+      ctx.fillText(hpText, sx, sy - sr(e.radius + 12));
     }
   }
 

@@ -3,6 +3,7 @@ import { updateCombat } from '../systems/combat';
 import { updateMovement } from '../systems/movement';
 import { updatePickups } from '../systems/pickups';
 import { updateSpawner } from '../systems/spawner';
+import { applySpecialBonus } from '../systems/specialBonus';
 import { applyUpgrade, rollUpgradeChoices } from '../systems/upgrades';
 import { MetaUpgradeState } from '../types';
 import { createInitialState, GameState } from './state';
@@ -53,6 +54,11 @@ export class GameRuntime {
       return;
     }
 
+    if (this.state.pendingSpecialChoices) {
+      this.callbacks.onState(this.state);
+      return;
+    }
+
     if (this.state.pendingUpgradeChoices) {
       if (this.state.pendingUpgradeChoices.length === 0) {
         this.state.pendingUpgradeChoices = rollUpgradeChoices(this.state, this.prng);
@@ -80,6 +86,12 @@ export class GameRuntime {
     if (!this.state.pendingUpgradeChoices) return;
     applyUpgrade(this.state, id);
     this.state.pendingUpgradeChoices = null;
+    this.callbacks.onState(this.state);
+  }
+
+  chooseSpecialBonus(id: string): void {
+    if (!this.state.pendingSpecialChoices) return;
+    applySpecialBonus(this.state, id);
     this.callbacks.onState(this.state);
   }
 

@@ -6,6 +6,7 @@ import { GameState } from '../../game/engine/state';
 import { MetaUpgradeState } from '../../game/types';
 import { HUD, HudDebugInfo } from '../components/HUD';
 import { Joystick } from '../components/Joystick';
+import { SpecialBonusModal } from '../components/SpecialBonusModal';
 import { UpgradeModal } from '../components/UpgradeModal';
 
 interface Props {
@@ -21,9 +22,9 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
   const [choices, setChoices] = useState<string[] | null>(null);
   const [showBuild, setShowBuild] = useState(false);
   const [debugInfo, setDebugInfo] = useState<HudDebugInfo | undefined>(undefined);
-  const [showHpBars, setShowHpBars] = useState(true);
+  const [showEnemyHp, setShowEnemyHp] = useState(true);
   const [showDamageText, setShowDamageText] = useState(true);
-  const showHpBarsRef = useRef(true);
+  const showEnemyHpRef = useRef(true);
   const showDamageTextRef = useRef(true);
 
   useEffect(() => {
@@ -76,7 +77,7 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
 
         if (canvas) {
           const ctx = canvas.getContext('2d');
-          if (ctx) renderGame(ctx, rt.state, canvas.width, canvas.height, { showHpBars: showHpBarsRef.current, showDamageText: showDamageTextRef.current });
+          if (ctx) renderGame(ctx, rt.state, canvas.width, canvas.height, { showEnemyHp: showEnemyHpRef.current, showDamageText: showDamageTextRef.current });
         }
       }
       rafId = requestAnimationFrame(tick);
@@ -136,7 +137,7 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
 
       {import.meta.env.DEV && (
         <div className="render-toggle">
-          <label><input type="checkbox" checked={showHpBars} onChange={(e: ChangeEvent<HTMLInputElement>) => { setShowHpBars(e.target.checked); showHpBarsRef.current = e.target.checked; }} />HPバー</label>
+          <label><input type="checkbox" checked={showEnemyHp} onChange={(e: ChangeEvent<HTMLInputElement>) => { setShowEnemyHp(e.target.checked); showEnemyHpRef.current = e.target.checked; }} />敵HP表示</label>
           <label><input type="checkbox" checked={showDamageText} onChange={(e: ChangeEvent<HTMLInputElement>) => { setShowDamageText(e.target.checked); showDamageTextRef.current = e.target.checked; }} />ダメージ表示</label>
         </div>
       )}
@@ -152,6 +153,13 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
           onPick={(id) => { runtimeRef.current?.chooseUpgrade(id); setChoices(null); }}
           canReroll={state.rerollCount > 0 && state.runGems > 0}
           onReroll={() => { if (runtimeRef.current?.reroll()) setChoices(runtimeRef.current.state.pendingUpgradeChoices ?? null); }}
+        />
+      )}
+
+      {state.pendingSpecialChoices && (
+        <SpecialBonusModal
+          choices={state.pendingSpecialChoices}
+          onPick={(id) => runtimeRef.current?.chooseSpecialBonus(id)}
         />
       )}
     </div>

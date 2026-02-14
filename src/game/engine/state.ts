@@ -27,7 +27,8 @@ export interface EnemyEntity {
   attackTimer: number;
   projectileSpeed: number;
   projectileDamage: number;
-  hpBarTimer: number;
+  hpDisplayTimer: number;
+  isElite: boolean;
 }
 
 export interface ProjectileEntity {
@@ -72,10 +73,27 @@ export interface FloatingText {
   maxLife: number;
 }
 
+export interface SpecialBonusChoice {
+  id: string;
+  category: 'shots' | 'cooldown' | 'damage';
+  label: string;
+  description: string;
+  rarity: 'common' | 'rare' | 'epic';
+  addShots?: number;
+  cooldownMul?: number;
+  damageMul?: number;
+}
+
 export interface RuntimeUnlocks {
   orbit: boolean;
   cone: boolean;
   shockwave: boolean;
+}
+
+export interface RunWeaponBonuses {
+  extraShots: number;
+  cooldownMultiplier: number;
+  damageMultiplier: number;
 }
 
 export interface GameState {
@@ -88,6 +106,7 @@ export interface GameState {
   player: PlayerEntity;
   playerStats: PlayerStats;
   weaponStats: WeaponRuntimeStats;
+  runWeaponBonuses: RunWeaponBonuses;
   enemies: EnemyEntity[];
   projectiles: ProjectileEntity[];
   enemyProjectiles: EnemyProjectileEntity[];
@@ -109,10 +128,12 @@ export interface GameState {
   upgradeStacks: Record<string, number>;
   selectedUpgrades: string[];
   pendingUpgradeChoices: string[] | null;
+  pendingSpecialChoices: SpecialBonusChoice[] | null;
   unlocks: RuntimeUnlocks;
   result: null | 'win' | 'lose';
   nextEntityId: number;
   spawnAccumulator: number;
+  spawnedCount: number;
 }
 
 export function initialPlayerStats(): PlayerStats {
@@ -135,6 +156,7 @@ export function createInitialState(seed: number): GameState {
     player: { pos: vec2(0, 0), hp: stats.maxHp, contactTimer: 0 },
     playerStats: stats,
     weaponStats: initialWeaponStats(),
+    runWeaponBonuses: { extraShots: 0, cooldownMultiplier: 1, damageMultiplier: 1 },
     enemies: [],
     projectiles: [],
     enemyProjectiles: [],
@@ -156,10 +178,12 @@ export function createInitialState(seed: number): GameState {
     upgradeStacks: {},
     selectedUpgrades: [],
     pendingUpgradeChoices: null,
+    pendingSpecialChoices: null,
     unlocks: { orbit: false, cone: false, shockwave: false },
     result: null,
     nextEntityId: 1,
     spawnAccumulator: 0,
+    spawnedCount: 0,
   };
 }
 

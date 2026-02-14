@@ -1,12 +1,13 @@
 import { distance, normalize } from '../engine/math';
 import { PRNG } from '../engine/prng';
 import { EnemyEntity, GameState } from '../engine/state';
+import { generateSpecialBonusChoices } from './specialBonus';
 
 export function updateCombat(state: GameState, dt: number, prng: PRNG): void {
   updateEnemyMovementAndAttacks(state, dt);
 
   state.fireTimer -= dt;
-  const fireInterval = Math.max(0.1, state.weaponStats.fireInterval * (1 - state.playerStats.fireRateBonus));
+  const fireInterval = Math.max(0.08, state.weaponStats.fireInterval * (1 - state.playerStats.fireRateBonus) * state.runWeaponBonuses.cooldownMultiplier);
   if (state.fireTimer <= 0) {
     state.fireTimer += fireInterval;
     fireBaseWeapon(state, prng);
@@ -40,7 +41,7 @@ export function updateCombat(state: GameState, dt: number, prng: PRNG): void {
   }
 
   for (const enemy of state.enemies) {
-    enemy.hpBarTimer = Math.max(0, enemy.hpBarTimer - dt);
+    enemy.hpDisplayTimer = Math.max(0, enemy.hpDisplayTimer - dt);
   }
 
   handleHits(state, prng);
@@ -107,11 +108,12 @@ function fireBaseWeapon(state: GameState, prng: PRNG): void {
   const target = nearestEnemy(state);
   if (!target) return;
   const aim = normalize({ x: target.pos.x - state.player.pos.x, y: target.pos.y - state.player.pos.y });
-  for (let i = 0; i < state.weaponStats.count; i += 1) {
-    const spread = (i - (state.weaponStats.count - 1) / 2) * 0.12 + (prng.next() - 0.5) * 0.04;
+  const totalShots = state.weaponStats.count + state.runWeaponBonuses.extraShots;
+  for (let i = 0; i < totalShots; i += 1) {
+    const spread = (i - (totalShots - 1) / 2) * 0.12 + (prng.next() - 0.5) * 0.04;
     const angle = Math.atan2(aim.y, aim.x) + spread;
     const crit = prng.next() < state.playerStats.critChance;
-    const damage = state.weaponStats.damage * (1 + state.playerStats.damageBonus) * (crit ? state.playerStats.critDamage : 1);
+    const damage = state.weaponStats.damage * (1 + state.playerStats.damageBonus) * state.runWeaponBonuses.damageMultiplier * (crit ? state.playerStats.critDamage : 1);
     state.projectiles.push({
       id: state.nextEntityId++,
       pos: { ...state.player.pos },
@@ -132,7 +134,7 @@ function fireCone(state: GameState): void {
       id: state.nextEntityId++,
       pos: { ...state.player.pos },
       vel: { x: Math.cos(base + offset) * 280, y: Math.sin(base + offset) * 280 },
-      damage: state.weaponStats.damage * 0.9,
+      damage: state.weaponStats.damage * 0.9 * state.runWeaponBonuses.damageMultiplier,
       radius: 3,
       pierceLeft: 0,
       knockback: 6,
@@ -144,9 +146,9 @@ function fireCone(state: GameState): void {
 function shockwave(state: GameState): void {
   for (const e of state.enemies) {
     if (distance(e.pos, state.player.pos) < 110) {
-      const dmg = 18 * (1 + state.playerStats.damageBonus);
+      const dmg = 18 * (1 + state.playerStats.damageBonus) * state.runWeaponBonuses.damageMultiplier;
       e.hp -= dmg;
-      e.hpBarTimer = 1.2;
+      e.hpDisplayTimer = 1.2;
       addFloatingDamage(state, e.pos.x, e.pos.y, dmg, false);
     }
   }
@@ -160,9 +162,9 @@ function orbitTick(state: GameState, dt: number): void {
     const orbPos = { x: state.player.pos.x + Math.cos(a) * radius, y: state.player.pos.y + Math.sin(a) * radius };
     for (const e of state.enemies) {
       if (distance(orbPos, e.pos) < e.radius + 10) {
-        const dmg = 24 * dt;
+        const dmg = 24 * dt * state.runWeaponBonuses.damageMultiplier;
         e.hp -= dmg;
-        e.hpBarTimer = 0.4;
+        e.hpDisplayTimer = 0.4;
       }
     }
   }
@@ -180,7 +182,7 @@ function handleHits(state: GameState, prng: PRNG): void {
     for (const e of state.enemies) {
       if (distance(p.pos, e.pos) <= p.radius + e.radius) {
         e.hp -= p.damage;
-        e.hpBarTimer = 1.2;
+        e.hpDisplayTimer = 1.4;
         addFloatingDamage(state, e.pos.x, e.pos.y, p.damage, p.isCrit);
         const dir = normalize({ x: e.pos.x - state.player.pos.x, y: e.pos.y - state.player.pos.y });
         e.pos.x += dir.x * p.knockback;
@@ -205,12 +207,19 @@ function handleHits(state: GameState, prng: PRNG): void {
     return Math.abs(p.pos.x - state.player.pos.x) < 1200 && Math.abs(p.pos.y - state.player.pos.y) < 1200;
   });
 
+  let triggeredSpecial = false;
   const dead = state.enemies.filter((e) => e.hp <= 0);
   for (const e of dead) {
     state.kills += 1;
     state.runCoins += e.coinValue;
     if (prng.next() < e.gemChance) state.runGems += 1;
     state.orbs.push({ id: state.nextEntityId++, pos: { ...e.pos }, value: e.xpValue });
+
+    if (e.isElite && !state.pendingSpecialChoices && !triggeredSpecial) {
+      state.pendingSpecialChoices = generateSpecialBonusChoices(prng);
+      state.paused = true;
+      triggeredSpecial = true;
+    }
   }
   state.enemies = state.enemies.filter((e) => e.hp > 0);
 }
