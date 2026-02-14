@@ -12,7 +12,14 @@ export interface EnemyDefinition {
   gemChance: number;
   spawnWeightByTime: { start: number; end: number; weight: number }[];
   color: string;
-  marker: 'none' | 'fast' | 'tank';
+  marker: 'none' | 'fast' | 'tank' | 'ranged';
+  behavior: 'chase' | 'ranged';
+  rangedAttack?: {
+    interval: number;
+    projectileSpeed: number;
+    projectileDamage: number;
+    preferredDistance: number;
+  };
 }
 
 export interface WeaponDefinition {

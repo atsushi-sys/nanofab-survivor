@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { UPGRADES } from '../../game/data/upgrades';
 import { renderGame } from '../../game/engine/render';
 import { GameRuntime } from '../../game/engine/runtime';
@@ -21,22 +21,16 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
   const [choices, setChoices] = useState<string[] | null>(null);
   const [showBuild, setShowBuild] = useState(false);
   const [debugInfo, setDebugInfo] = useState<HudDebugInfo | undefined>(undefined);
+  const [showHpBars, setShowHpBars] = useState(true);
+  const [showDamageText, setShowDamageText] = useState(true);
+  const showHpBarsRef = useRef(true);
+  const showDamageTextRef = useRef(true);
 
   useEffect(() => {
     const runtime = new GameRuntime(seed, meta, {
       onState: (nextState) => setState({ ...nextState }),
       onUpgradeOffer: (nextChoices) => setChoices(nextChoices),
-      onResult: (resultState) => {
-        onFinish({
-          win: resultState.result === 'win',
-          time: resultState.time,
-          level: resultState.level,
-          kills: resultState.kills,
-          coins: resultState.runCoins,
-          gems: resultState.runGems,
-          seed: resultState.seed,
-        });
-      },
+      onResult: (resultState) => onFinish({ win: resultState.result === 'win', time: resultState.time, level: resultState.level, kills: resultState.kills, coins: resultState.runCoins, gems: resultState.runGems, seed: resultState.seed }),
     });
 
     runtimeRef.current = runtime;
@@ -51,10 +45,8 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
 
     const tick = (now: number) => {
       if (!running) return;
-
       const canvas = canvasRef.current;
       const rt = runtimeRef.current;
-
       if (lastTime === 0) lastTime = now;
       const dtSec = Math.min(0.1, (now - lastTime) / 1000);
       lastTime = now;
@@ -75,18 +67,18 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
             elapsedTimeSec: rt.state.time,
             lastDtMs,
             enemyCount: rt.state.enemies.length,
-            projectileCount: rt.state.projectiles.length,
-            pickupCount: rt.state.orbs.length,
+            projectileCount: rt.state.projectiles.length + rt.state.enemyProjectiles.length,
+            pickupCount: rt.state.orbs.length + rt.state.specialPickups.length,
             spawnAccumulator: rt.state.spawnAccumulator,
+            zoom: rt.state.cameraZoom,
           });
         }
 
         if (canvas) {
           const ctx = canvas.getContext('2d');
-          if (ctx) renderGame(ctx, rt.state, canvas.width, canvas.height);
+          if (ctx) renderGame(ctx, rt.state, canvas.width, canvas.height, { showHpBars: showHpBarsRef.current, showDamageText: showDamageTextRef.current });
         }
       }
-
       rafId = requestAnimationFrame(tick);
     };
 
@@ -101,7 +93,6 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
       const rt = runtimeRef.current;
       if (!rt) return;
       const m = rt.state.movementInput;
-
       if (e.type === 'keydown') {
         if (e.key === 'w' || e.key === 'ArrowUp') m.y = -1;
         if (e.key === 's' || e.key === 'ArrowDown') m.y = 1;
@@ -111,7 +102,6 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
         if (e.key === '1') rt.state.speed = 1;
         if (e.key === '2') rt.state.speed = 2;
       }
-
       if (e.type === 'keyup') {
         if (e.key === 'w' || e.key === 'ArrowUp' || e.key === 's' || e.key === 'ArrowDown') m.y = 0;
         if (e.key === 'a' || e.key === 'ArrowLeft' || e.key === 'd' || e.key === 'ArrowRight') m.x = 0;
@@ -142,45 +132,26 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
   return (
     <div className="stage">
       <canvas ref={canvasRef} />
-      <HUD
-        state={state}
-        onPause={() => {
-          const runtime = runtimeRef.current;
-          if (!runtime) return;
-          runtime.state.paused = !runtime.state.paused;
-          setState({ ...runtime.state });
-        }}
-        onSpeed={() => {
-          const runtime = runtimeRef.current;
-          if (!runtime) return;
-          runtime.state.speed = runtime.state.speed === 1 ? 2 : 1;
-          setState({ ...runtime.state });
-        }}
-        debugInfo={import.meta.env.DEV ? debugInfo : undefined}
-      />
+      <HUD state={state} onPause={() => { if (runtimeRef.current) { runtimeRef.current.state.paused = !runtimeRef.current.state.paused; setState({ ...runtimeRef.current.state }); } }} onSpeed={() => { if (runtimeRef.current) { runtimeRef.current.state.speed = runtimeRef.current.state.speed === 1 ? 2 : 1; setState({ ...runtimeRef.current.state }); } }} debugInfo={import.meta.env.DEV ? debugInfo : undefined} />
+
+      {import.meta.env.DEV && (
+        <div className="render-toggle">
+          <label><input type="checkbox" checked={showHpBars} onChange={(e: ChangeEvent<HTMLInputElement>) => { setShowHpBars(e.target.checked); showHpBarsRef.current = e.target.checked; }} />HPバー</label>
+          <label><input type="checkbox" checked={showDamageText} onChange={(e: ChangeEvent<HTMLInputElement>) => { setShowDamageText(e.target.checked); showDamageTextRef.current = e.target.checked; }} />ダメージ表示</label>
+        </div>
+      )}
 
       <Joystick onMove={(x, y) => { if (runtimeRef.current) runtimeRef.current.state.movementInput = { x, y }; }} />
 
       <button className="build-toggle" onClick={() => setShowBuild((v: boolean) => !v)}>ビルド</button>
-      {showBuild && (
-        <div className="build-panel">
-          {Object.entries(state.upgradeStacks).map(([id, stack]) => (
-            <div key={id}>{UPGRADES.find((u) => u.id === id)?.name} x{stack}</div>
-          ))}
-        </div>
-      )}
+      {showBuild && <div className="build-panel">{Object.entries(state.upgradeStacks).map(([id, stack]) => <div key={id}>{UPGRADES.find((u) => u.id === id)?.name} x{stack}</div>)}</div>}
 
       {choices && (
         <UpgradeModal
           choices={choices}
-          onPick={(id) => {
-            runtimeRef.current?.chooseUpgrade(id);
-            setChoices(null);
-          }}
+          onPick={(id) => { runtimeRef.current?.chooseUpgrade(id); setChoices(null); }}
           canReroll={state.rerollCount > 0 && state.runGems > 0}
-          onReroll={() => {
-            if (runtimeRef.current?.reroll()) setChoices(runtimeRef.current.state.pendingUpgradeChoices ?? null);
-          }}
+          onReroll={() => { if (runtimeRef.current?.reroll()) setChoices(runtimeRef.current.state.pendingUpgradeChoices ?? null); }}
         />
       )}
     </div>

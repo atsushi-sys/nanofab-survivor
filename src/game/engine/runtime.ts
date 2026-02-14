@@ -66,7 +66,7 @@ export class GameRuntime {
     updateSpawner(this.state, dt, this.prng);
     updateMovement(this.state, dt);
     updateCombat(this.state, dt, this.prng);
-    updatePickups(this.state, dt);
+    updatePickups(this.state, dt, this.prng);
 
     if (this.state.result) {
       if (this.state.result === 'win') this.state.runCoins += 80;

@@ -13,9 +13,8 @@ export const ENEMIES: EnemyDefinition[] = [
     gemChance: 0.04,
     color: '#f97316',
     marker: 'none',
-    spawnWeightByTime: [
-      { start: 0, end: 180, weight: 1 },
-    ],
+    behavior: 'chase',
+    spawnWeightByTime: [{ start: 0, end: 180, weight: 1 }],
   },
   {
     id: 'quickmote',
@@ -29,9 +28,8 @@ export const ENEMIES: EnemyDefinition[] = [
     gemChance: 0.05,
     color: '#22d3ee',
     marker: 'fast',
-    spawnWeightByTime: [
-      { start: 60, end: 180, weight: 0.85 },
-    ],
+    behavior: 'chase',
+    spawnWeightByTime: [{ start: 60, end: 180, weight: 0.85 }],
   },
   {
     id: 'tarclump',
@@ -45,8 +43,28 @@ export const ENEMIES: EnemyDefinition[] = [
     gemChance: 0.08,
     color: '#a855f7',
     marker: 'tank',
-    spawnWeightByTime: [
-      { start: 120, end: 180, weight: 0.7 },
-    ],
+    behavior: 'chase',
+    spawnWeightByTime: [{ start: 120, end: 180, weight: 0.7 }],
+  },
+  {
+    id: 'sparkmite',
+    name: 'スパークマイト',
+    hp: 24,
+    speed: 46,
+    damage: 6,
+    radius: 10,
+    xpValue: 8,
+    coinValue: 2,
+    gemChance: 0.07,
+    color: '#fb7185',
+    marker: 'ranged',
+    behavior: 'ranged',
+    rangedAttack: {
+      interval: 2.1,
+      projectileSpeed: 180,
+      projectileDamage: 8,
+      preferredDistance: 170,
+    },
+    spawnWeightByTime: [{ start: 75, end: 180, weight: 0.7 }],
   },
 ];

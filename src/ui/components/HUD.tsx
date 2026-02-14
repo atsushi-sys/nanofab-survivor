@@ -9,6 +9,7 @@ export interface HudDebugInfo {
   projectileCount: number;
   pickupCount: number;
   spawnAccumulator: number;
+  zoom: number;
 }
 
 interface Props {
@@ -49,7 +50,7 @@ export function HUD({ state, onPause, onSpeed, debugInfo }: Props) {
           <div>{debugInfo.running ? 'running' : 'stopped'} / {debugInfo.paused ? 'paused' : 'active'}</div>
           <div>elapsed {debugInfo.elapsedTimeSec.toFixed(2)}s / dt {debugInfo.lastDtMs.toFixed(2)}ms</div>
           <div>enemy {debugInfo.enemyCount} / projectile {debugInfo.projectileCount} / pickup {debugInfo.pickupCount}</div>
-          <div>spawnAcc {debugInfo.spawnAccumulator.toFixed(3)}</div>
+          <div>spawnAcc {debugInfo.spawnAccumulator.toFixed(3)} / zoom {debugInfo.zoom.toFixed(2)}</div>
         </div>
       )}
     </div>

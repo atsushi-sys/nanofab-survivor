@@ -6,10 +6,7 @@ import { GameState } from '../engine/state';
 function weightForTime(defId: string, t: number): number {
   const def = ENEMIES.find((e) => e.id === defId);
   if (!def) return 0;
-  return def.spawnWeightByTime.reduce((acc, r) => {
-    if (t >= r.start && t < r.end) return acc + r.weight;
-    return acc;
-  }, 0);
+  return def.spawnWeightByTime.reduce((acc, r) => (t >= r.start && t < r.end ? acc + r.weight : acc), 0);
 }
 
 export function updateSpawner(state: GameState, dt: number, prng: PRNG): void {
@@ -34,6 +31,7 @@ export function updateSpawner(state: GameState, dt: number, prng: PRNG): void {
       defId: def.id,
       pos: spawn,
       hp: def.hp,
+      maxHp: def.hp,
       radius: def.radius,
       speed: def.speed,
       damage: def.damage,
@@ -42,6 +40,13 @@ export function updateSpawner(state: GameState, dt: number, prng: PRNG): void {
       gemChance: def.gemChance,
       color: def.color,
       marker: def.marker,
+      behavior: def.behavior,
+      preferredDistance: def.rangedAttack?.preferredDistance ?? 0,
+      attackInterval: def.rangedAttack?.interval ?? 0,
+      attackTimer: def.rangedAttack?.interval ? 0.5 + prng.next() * def.rangedAttack.interval : 0,
+      projectileSpeed: def.rangedAttack?.projectileSpeed ?? 0,
+      projectileDamage: def.rangedAttack?.projectileDamage ?? 0,
+      hpBarTimer: 0,
     });
   }
 }
