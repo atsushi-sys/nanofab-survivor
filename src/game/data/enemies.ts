@@ -14,4 +14,9 @@ export const WORM_DEF: WormDefinition = {
   normalColor: '#b45309',
   eliteColor: '#a855f7',
   eliteEvery: 10,
+  initialSegments: 100,
+  eliteHpBonus: 1.3,
+  hpScaleEveryKills: 10,
+  hpScaleStep: 0.16,
+  clearRewardCoins: 3000,
 };

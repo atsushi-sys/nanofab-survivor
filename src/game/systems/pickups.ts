@@ -52,5 +52,4 @@ export function updatePickups(state: GameState, dt: number, prng: PRNG): void {
   });
 
   if (state.player.hp <= 0) state.result = 'lose';
-  if (state.time >= 180) state.result = 'win';
 }

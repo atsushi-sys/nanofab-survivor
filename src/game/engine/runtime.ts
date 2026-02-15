@@ -75,7 +75,6 @@ export class GameRuntime {
     updatePickups(this.state, dt, this.prng);
 
     if (this.state.result) {
-      if (this.state.result === 'win') this.state.runCoins += 80;
       this.callbacks.onResult(this.state);
     }
 

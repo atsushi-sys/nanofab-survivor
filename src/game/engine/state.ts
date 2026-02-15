@@ -99,6 +99,9 @@ export interface GameState {
   weaponStats: WeaponRuntimeStats;
   runWeaponBonuses: RunWeaponBonuses;
   worm: WormEnemy;
+  wormHpMultiplier: number;
+  hpScaleTierApplied: number;
+  clearRewardGranted: boolean;
   projectiles: ProjectileEntity[];
   orbs: OrbEntity[];
   specialPickups: SpecialPickupEntity[];
@@ -148,13 +151,13 @@ function createWorm(state: { nextEntityId: number }): WormEnemy {
   ]);
 
   const segments: WormSegment[] = [];
-  const startSegments = 56;
-  for (let i = 0; i < startSegments; i += 1) {
+  for (let i = 0; i < WORM_DEF.initialSegments; i += 1) {
     const isElite = i % WORM_DEF.eliteEvery === 0;
+    const hp = WORM_DEF.segmentHp * (isElite ? WORM_DEF.eliteHpBonus : 1);
     segments.push({
       id: state.nextEntityId + i,
-      hp: WORM_DEF.segmentHp,
-      maxHp: WORM_DEF.segmentHp,
+      hp,
+      maxHp: hp,
       radius: WORM_DEF.segmentRadius,
       s: 0,
       isElite,
@@ -192,6 +195,9 @@ export function createInitialState(seed: number): GameState {
     weaponStats: initialWeaponStats(),
     runWeaponBonuses: { extraShots: 0, cooldownMultiplier: 1, damageMultiplier: 1 },
     worm,
+    wormHpMultiplier: 1,
+    hpScaleTierApplied: 0,
+    clearRewardGranted: false,
     projectiles: [],
     orbs: [],
     specialPickups: [],

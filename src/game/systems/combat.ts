@@ -55,6 +55,21 @@ function addFloatingDamage(state: GameState, x: number, y: number, damage: numbe
   state.floatingTexts.push({ id: state.nextEntityId++, pos: { x, y: y - 8 }, value: Math.round(damage), crit, life: 0.8, maxLife: 0.8 });
 }
 
+function applyHpScalingByKills(state: GameState): void {
+  const tierNow = Math.floor(state.kills / WORM_DEF.hpScaleEveryKills);
+  if (tierNow <= state.hpScaleTierApplied) return;
+
+  const tiersToApply = tierNow - state.hpScaleTierApplied;
+  const multiplier = Math.pow(1 + WORM_DEF.hpScaleStep, tiersToApply);
+  state.wormHpMultiplier *= multiplier;
+  state.hpScaleTierApplied = tierNow;
+
+  for (const seg of state.worm.segments) {
+    seg.hp *= multiplier;
+    seg.maxHp *= multiplier;
+  }
+}
+
 function handleProjectileHits(state: GameState, prng: PRNG): void {
   const removeProjectileIds = new Set<number>();
   const damageBySegment = new Map<number, { damage: number; crit: boolean }>();
@@ -63,7 +78,6 @@ function handleProjectileHits(state: GameState, prng: PRNG): void {
     const sProjection = projectToPath(state.worm.path, p.pos);
     const centerIndex = Math.round((state.worm.headS - sProjection) / state.worm.spacing);
 
-    let hitAny = false;
     for (let d = -3; d <= 3; d += 1) {
       const idx = centerIndex + d;
       if (idx < 0 || idx >= state.worm.segments.length) continue;
@@ -76,15 +90,12 @@ function handleProjectileHits(state: GameState, prng: PRNG): void {
         damageBySegment.set(idx, stack);
 
         p.pierceLeft -= 1;
-        hitAny = true;
         if (p.pierceLeft < 0) {
           removeProjectileIds.add(p.id);
           break;
         }
       }
     }
-
-    if (hitAny && p.pierceLeft < 0) continue;
   }
 
   const broken: number[] = [];
@@ -121,9 +132,18 @@ function handleProjectileHits(state: GameState, prng: PRNG): void {
       state.worm.segments.splice(idx, 1);
     }
 
+    applyHpScalingByKills(state);
+
     state.worm.headS = clamp(state.worm.headS - state.worm.knockbackPerBreak * ordered.length, 0, state.worm.goalS);
     for (let i = 0; i < state.worm.segments.length; i += 1) {
       state.worm.segments[i].s = state.worm.headS - i * state.worm.spacing;
+    }
+
+    if (state.worm.segments.length === 0 && !state.clearRewardGranted) {
+      state.runCoins += WORM_DEF.clearRewardCoins;
+      state.clearRewardGranted = true;
+      state.result = 'win';
+      state.paused = true;
     }
   }
 

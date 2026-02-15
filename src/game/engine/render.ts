@@ -61,7 +61,7 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, w: n
     ctx.stroke();
 
     if (options.showEnemyHp && (seg.hpDisplayTimer > 0 || seg.isElite)) {
-      const hpText = `${Math.ceil(clamp(seg.hp, 0, seg.maxHp))}/${Math.ceil(seg.maxHp)}`;
+      const hpText = `${Math.ceil(clamp(seg.hp, 0, seg.maxHp))}`;
       ctx.textAlign = 'center';
       ctx.font = `${Math.max(11, sr(11))}px system-ui`;
       ctx.lineWidth = 3;

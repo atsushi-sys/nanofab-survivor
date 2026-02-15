@@ -14,6 +14,11 @@ export interface WormDefinition {
   normalColor: string;
   eliteColor: string;
   eliteEvery: number;
+  initialSegments: number;
+  eliteHpBonus: number;
+  hpScaleEveryKills: number;
+  hpScaleStep: number;
+  clearRewardCoins: number;
 }
 
 export interface WeaponDefinition {

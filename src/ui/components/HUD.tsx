@@ -10,6 +10,8 @@ export interface HudDebugInfo {
   pickupCount: number;
   spawnAccumulator: number;
   zoom: number;
+  wormHpMultiplier: number;
+  segmentsRemaining: number;
   segmentDebug?: string[];
 }
 
@@ -41,7 +43,7 @@ export function HUD({ state, onPause, onSpeed, debugInfo }: Props) {
       <div className="hud-bottom">
         <button onClick={onPause}>{state.paused ? '再開' : '一時停止'}</button>
         <button onClick={onSpeed}>速度 x{state.speed}</button>
-        <div>リロール {state.rerollCount}</div>
+        <div>残体節 {state.worm.segments.length}</div>
         <div>コイン {state.runCoins}</div>
         <div>ジェム {state.runGems}</div>
       </div>
@@ -51,6 +53,7 @@ export function HUD({ state, onPause, onSpeed, debugInfo }: Props) {
           <div>{debugInfo.running ? 'running' : 'stopped'} / {debugInfo.paused ? 'paused' : 'active'}</div>
           <div>elapsed {debugInfo.elapsedTimeSec.toFixed(2)}s / dt {debugInfo.lastDtMs.toFixed(2)}ms</div>
           <div>enemy {debugInfo.enemyCount} / projectile {debugInfo.projectileCount} / pickup {debugInfo.pickupCount}</div>
+          <div>remain {debugInfo.segmentsRemaining} / hpMult x{debugInfo.wormHpMultiplier.toFixed(2)}</div>
           <div>spawnAcc {debugInfo.spawnAccumulator.toFixed(3)} / zoom {debugInfo.zoom.toFixed(2)}</div>
           {debugInfo.segmentDebug?.map((line) => <div key={line}>{line}</div>)}
         </div>

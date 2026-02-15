@@ -28,6 +28,7 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
   const [showPathDebug, setShowPathDebug] = useState(false);
   const showEnemyHpRef = useRef(true);
   const showDamageTextRef = useRef(true);
+  const showPathDebugRef = useRef(false);
 
   useEffect(() => {
     const runtime = new GameRuntime(seed, meta, {
@@ -74,6 +75,8 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
             pickupCount: rt.state.orbs.length + rt.state.specialPickups.length,
             spawnAccumulator: rt.state.spawnAccumulator,
             zoom: rt.state.cameraZoom,
+            wormHpMultiplier: rt.state.wormHpMultiplier,
+            segmentsRemaining: rt.state.worm.segments.length,
             segmentDebug: rt.state.worm.segments.slice(0, 5).map((seg, i) => {
               const world = samplePath(rt.state.worm.path, seg.s);
               const camX = 0;
@@ -87,7 +90,7 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
 
         if (canvas) {
           const ctx = canvas.getContext('2d');
-          if (ctx) renderGame(ctx, rt.state, canvas.width, canvas.height, { showEnemyHp: showEnemyHpRef.current, showDamageText: showDamageTextRef.current, showPathDebug });
+          if (ctx) renderGame(ctx, rt.state, canvas.width, canvas.height, { showEnemyHp: showEnemyHpRef.current, showDamageText: showDamageTextRef.current, showPathDebug: showPathDebugRef.current });
         }
       }
       rafId = requestAnimationFrame(tick);
@@ -146,7 +149,7 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
         <div className="render-toggle">
           <label><input type="checkbox" checked={showEnemyHp} onChange={(e: ChangeEvent<HTMLInputElement>) => { setShowEnemyHp(e.target.checked); showEnemyHpRef.current = e.target.checked; }} />敵HP表示</label>
           <label><input type="checkbox" checked={showDamageText} onChange={(e: ChangeEvent<HTMLInputElement>) => { setShowDamageText(e.target.checked); showDamageTextRef.current = e.target.checked; }} />ダメージ表示</label>
-          <label><input type="checkbox" checked={showPathDebug} onChange={(e: ChangeEvent<HTMLInputElement>) => setShowPathDebug(e.target.checked)} />パス表示(Dev)</label>
+          <label><input type="checkbox" checked={showPathDebug} onChange={(e: ChangeEvent<HTMLInputElement>) => { setShowPathDebug(e.target.checked); showPathDebugRef.current = e.target.checked; }} />パス表示(Dev)</label>
         </div>
       )}
 
