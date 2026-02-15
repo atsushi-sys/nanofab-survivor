@@ -2,6 +2,7 @@ import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { UPGRADES } from '../../game/data/upgrades';
 import { renderGame } from '../../game/engine/render';
 import { GameRuntime } from '../../game/engine/runtime';
+import { samplePath } from '../../game/engine/path';
 import { GameState } from '../../game/engine/state';
 import { MetaUpgradeState } from '../../game/types';
 import { HUD, HudDebugInfo } from '../components/HUD';
@@ -24,6 +25,7 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
   const [debugInfo, setDebugInfo] = useState<HudDebugInfo | undefined>(undefined);
   const [showEnemyHp, setShowEnemyHp] = useState(true);
   const [showDamageText, setShowDamageText] = useState(true);
+  const [showPathDebug, setShowPathDebug] = useState(false);
   const showEnemyHpRef = useRef(true);
   const showDamageTextRef = useRef(true);
 
@@ -72,12 +74,20 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
             pickupCount: rt.state.orbs.length + rt.state.specialPickups.length,
             spawnAccumulator: rt.state.spawnAccumulator,
             zoom: rt.state.cameraZoom,
+            segmentDebug: rt.state.worm.segments.slice(0, 5).map((seg, i) => {
+              const world = samplePath(rt.state.worm.path, seg.s);
+              const camX = 0;
+              const camY = rt.state.player.pos.y - 420;
+              const screenX = (world.x - camX) * rt.state.cameraZoom + (canvas?.width ?? 0) / 2;
+              const screenY = (world.y - camY) * rt.state.cameraZoom + (canvas?.height ?? 0) / 2;
+              return `seg${i} s=${seg.s.toFixed(1)} w(${world.x.toFixed(0)},${world.y.toFixed(0)}) sc(${screenX.toFixed(0)},${screenY.toFixed(0)})`;
+            }),
           });
         }
 
         if (canvas) {
           const ctx = canvas.getContext('2d');
-          if (ctx) renderGame(ctx, rt.state, canvas.width, canvas.height, { showEnemyHp: showEnemyHpRef.current, showDamageText: showDamageTextRef.current });
+          if (ctx) renderGame(ctx, rt.state, canvas.width, canvas.height, { showEnemyHp: showEnemyHpRef.current, showDamageText: showDamageTextRef.current, showPathDebug });
         }
       }
       rafId = requestAnimationFrame(tick);
@@ -136,6 +146,7 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
         <div className="render-toggle">
           <label><input type="checkbox" checked={showEnemyHp} onChange={(e: ChangeEvent<HTMLInputElement>) => { setShowEnemyHp(e.target.checked); showEnemyHpRef.current = e.target.checked; }} />敵HP表示</label>
           <label><input type="checkbox" checked={showDamageText} onChange={(e: ChangeEvent<HTMLInputElement>) => { setShowDamageText(e.target.checked); showDamageTextRef.current = e.target.checked; }} />ダメージ表示</label>
+          <label><input type="checkbox" checked={showPathDebug} onChange={(e: ChangeEvent<HTMLInputElement>) => setShowPathDebug(e.target.checked)} />パス表示(Dev)</label>
         </div>
       )}
 

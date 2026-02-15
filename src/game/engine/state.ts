@@ -134,17 +134,17 @@ export function initialWeaponStats(): WeaponRuntimeStats {
 
 function createWorm(state: { nextEntityId: number }): WormEnemy {
   const path = buildPath([
-    vec2(-380, -760),
-    vec2(380, -760),
-    vec2(380, -520),
-    vec2(-380, -520),
-    vec2(-380, -260),
-    vec2(380, -260),
-    vec2(380, 20),
-    vec2(-380, 20),
-    vec2(-380, 300),
-    vec2(280, 300),
-    vec2(280, 560),
+    vec2(-380, -120),
+    vec2(380, -120),
+    vec2(380, 40),
+    vec2(-380, 40),
+    vec2(-380, 190),
+    vec2(380, 190),
+    vec2(380, 330),
+    vec2(-380, 330),
+    vec2(-380, 470),
+    vec2(280, 470),
+    vec2(280, 620),
   ]);
 
   const segments: WormSegment[] = [];

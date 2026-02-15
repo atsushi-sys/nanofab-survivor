@@ -10,6 +10,7 @@ export interface HudDebugInfo {
   pickupCount: number;
   spawnAccumulator: number;
   zoom: number;
+  segmentDebug?: string[];
 }
 
 interface Props {
@@ -51,6 +52,7 @@ export function HUD({ state, onPause, onSpeed, debugInfo }: Props) {
           <div>elapsed {debugInfo.elapsedTimeSec.toFixed(2)}s / dt {debugInfo.lastDtMs.toFixed(2)}ms</div>
           <div>enemy {debugInfo.enemyCount} / projectile {debugInfo.projectileCount} / pickup {debugInfo.pickupCount}</div>
           <div>spawnAcc {debugInfo.spawnAccumulator.toFixed(3)} / zoom {debugInfo.zoom.toFixed(2)}</div>
+          {debugInfo.segmentDebug?.map((line) => <div key={line}>{line}</div>)}
         </div>
       )}
     </div>
