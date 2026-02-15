@@ -1,58 +1,51 @@
-import { ENEMIES } from '../data/enemies';
-import { Vec2 } from '../engine/math';
+import { WORM_DEF } from '../data/enemies';
 import { PRNG } from '../engine/prng';
 import { GameState } from '../engine/state';
 
-function weightForTime(defId: string, t: number): number {
-  const def = ENEMIES.find((e) => e.id === defId);
-  if (!def) return 0;
-  return def.spawnWeightByTime.reduce((acc, r) => (t >= r.start && t < r.end ? acc + r.weight : acc), 0);
+function hpScaleFromKills(kills: number): number {
+  return 1 + kills * 0.005;
+}
+
+function appendSegment(state: GameState, prng: PRNG): void {
+  state.spawnedCount += 1;
+  const isElite = state.spawnedCount % WORM_DEF.eliteEvery === 0;
+  const scale = hpScaleFromKills(state.kills) * (isElite ? 1.3 : 1);
+  const hp = WORM_DEF.segmentHp * scale;
+  state.worm.segments.push({
+    id: state.nextEntityId++,
+    hp,
+    maxHp: hp,
+    radius: WORM_DEF.segmentRadius,
+    s: 0,
+    isElite,
+    hpDisplayTimer: isElite ? 999 : 0,
+  });
+
+  if (prng.next() < 0.01) {
+    // slight jitter in future segment toughness so runs do not feel flat.
+    const seg = state.worm.segments[state.worm.segments.length - 1];
+    seg.hp *= 1.08;
+    seg.maxHp *= 1.08;
+  }
 }
 
 export function updateSpawner(state: GameState, dt: number, prng: PRNG): void {
-  const perSecond = 1 + state.time * 0.032;
-  state.spawnAccumulator += perSecond * dt;
+  state.worm.headS += state.worm.speed * dt;
 
-  while (state.spawnAccumulator >= 1) {
-    state.spawnAccumulator -= 1;
-    const candidates = ENEMIES.filter((e) => weightForTime(e.id, state.time) > 0);
-    if (candidates.length === 0) return;
+  const maxSegments = 92;
+  if (state.worm.segments.length < maxSegments) {
+    state.spawnAccumulator += dt * 0.85;
+    while (state.spawnAccumulator >= 1 && state.worm.segments.length < maxSegments) {
+      state.spawnAccumulator -= 1;
+      appendSegment(state, prng);
+    }
+  }
 
-    const def = prng.pickWeighted(candidates, (c) => weightForTime(c.id, state.time));
-    const angle = prng.next() * Math.PI * 2;
-    const dist = 380 + prng.next() * 180;
-    const spawn: Vec2 = {
-      x: state.player.pos.x + Math.cos(angle) * dist,
-      y: state.player.pos.y + Math.sin(angle) * dist,
-    };
+  for (let i = 0; i < state.worm.segments.length; i += 1) {
+    state.worm.segments[i].s = state.worm.headS - i * state.worm.spacing;
+  }
 
-    state.spawnedCount += 1;
-    const eliteSpawn = state.spawnedCount % 20 === 0;
-    const hpScale = 1 + Math.floor(state.kills / 20) * 0.12;
-    const eliteHpBonus = eliteSpawn ? 1.35 : 1;
-
-    state.enemies.push({
-      id: state.nextEntityId++,
-      defId: def.id,
-      pos: spawn,
-      hp: def.hp * hpScale * eliteHpBonus,
-      maxHp: def.hp * hpScale * eliteHpBonus,
-      radius: def.radius,
-      speed: eliteSpawn ? def.speed * 1.08 : def.speed,
-      damage: eliteSpawn ? def.damage * 1.15 : def.damage,
-      xpValue: eliteSpawn ? Math.round(def.xpValue * 1.6) : def.xpValue,
-      coinValue: eliteSpawn ? Math.round(def.coinValue * 2) : def.coinValue,
-      gemChance: eliteSpawn ? Math.min(1, def.gemChance + 0.12) : def.gemChance,
-      color: eliteSpawn ? '#facc15' : def.color,
-      marker: def.marker,
-      behavior: def.behavior,
-      preferredDistance: def.rangedAttack?.preferredDistance ?? 0,
-      attackInterval: def.rangedAttack?.interval ?? 0,
-      attackTimer: def.rangedAttack?.interval ? 0.5 + prng.next() * def.rangedAttack.interval : 0,
-      projectileSpeed: def.rangedAttack?.projectileSpeed ?? 0,
-      projectileDamage: eliteSpawn ? (def.rangedAttack?.projectileDamage ?? 0) * 1.15 : def.rangedAttack?.projectileDamage ?? 0,
-      hpDisplayTimer: eliteSpawn ? 999 : 0,
-      isElite: eliteSpawn,
-    });
+  if (state.worm.headS >= state.worm.goalS) {
+    state.result = 'lose';
   }
 }

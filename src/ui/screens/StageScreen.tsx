@@ -67,8 +67,8 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
             paused: rt.state.paused,
             elapsedTimeSec: rt.state.time,
             lastDtMs,
-            enemyCount: rt.state.enemies.length,
-            projectileCount: rt.state.projectiles.length + rt.state.enemyProjectiles.length,
+            enemyCount: rt.state.worm.segments.length,
+            projectileCount: rt.state.projectiles.length,
             pickupCount: rt.state.orbs.length + rt.state.specialPickups.length,
             spawnAccumulator: rt.state.spawnAccumulator,
             zoom: rt.state.cameraZoom,
@@ -95,8 +95,6 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
       if (!rt) return;
       const m = rt.state.movementInput;
       if (e.type === 'keydown') {
-        if (e.key === 'w' || e.key === 'ArrowUp') m.y = -1;
-        if (e.key === 's' || e.key === 'ArrowDown') m.y = 1;
         if (e.key === 'a' || e.key === 'ArrowLeft') m.x = -1;
         if (e.key === 'd' || e.key === 'ArrowRight') m.x = 1;
         if (e.key === ' ') rt.state.paused = !rt.state.paused;
@@ -104,7 +102,6 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
         if (e.key === '2') rt.state.speed = 2;
       }
       if (e.type === 'keyup') {
-        if (e.key === 'w' || e.key === 'ArrowUp' || e.key === 's' || e.key === 'ArrowDown') m.y = 0;
         if (e.key === 'a' || e.key === 'ArrowLeft' || e.key === 'd' || e.key === 'ArrowRight') m.x = 0;
       }
     };
@@ -142,7 +139,7 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
         </div>
       )}
 
-      <Joystick onMove={(x, y) => { if (runtimeRef.current) runtimeRef.current.state.movementInput = { x, y }; }} />
+      <Joystick onMove={(x, _y) => { if (runtimeRef.current) runtimeRef.current.state.movementInput = { x, y: 0 }; }} />
 
       <button className="build-toggle" onClick={() => setShowBuild((v: boolean) => !v)}>ビルド</button>
       {showBuild && <div className="build-panel">{Object.entries(state.upgradeStacks).map(([id, stack]) => <div key={id}>{UPGRADES.find((u) => u.id === id)?.name} x{stack}</div>)}</div>}

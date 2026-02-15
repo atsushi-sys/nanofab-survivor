@@ -1,4 +1,6 @@
+import { WORM_DEF } from '../data/enemies';
 import { PlayerStats, WeaponRuntimeStats } from '../types';
+import { buildPath, PathCache } from './path';
 import { vec2, Vec2 } from './math';
 
 export interface PlayerEntity {
@@ -7,28 +9,24 @@ export interface PlayerEntity {
   contactTimer: number;
 }
 
-export interface EnemyEntity {
+export interface WormSegment {
   id: number;
-  defId: string;
-  pos: Vec2;
   hp: number;
   maxHp: number;
   radius: number;
-  speed: number;
-  damage: number;
-  xpValue: number;
-  coinValue: number;
-  gemChance: number;
-  color: string;
-  marker: 'none' | 'fast' | 'tank' | 'ranged';
-  behavior: 'chase' | 'ranged';
-  preferredDistance: number;
-  attackInterval: number;
-  attackTimer: number;
-  projectileSpeed: number;
-  projectileDamage: number;
-  hpDisplayTimer: number;
+  s: number;
   isElite: boolean;
+  hpDisplayTimer: number;
+}
+
+export interface WormEnemy {
+  headS: number;
+  speed: number;
+  spacing: number;
+  goalS: number;
+  knockbackPerBreak: number;
+  path: PathCache;
+  segments: WormSegment[];
 }
 
 export interface ProjectileEntity {
@@ -40,14 +38,6 @@ export interface ProjectileEntity {
   pierceLeft: number;
   knockback: number;
   isCrit: boolean;
-}
-
-export interface EnemyProjectileEntity {
-  id: number;
-  pos: Vec2;
-  vel: Vec2;
-  damage: number;
-  radius: number;
 }
 
 export interface OrbEntity {
@@ -104,19 +94,17 @@ export interface GameState {
   cameraZoom: number;
   seed: number;
   player: PlayerEntity;
+  playerLaneY: number;
   playerStats: PlayerStats;
   weaponStats: WeaponRuntimeStats;
   runWeaponBonuses: RunWeaponBonuses;
-  enemies: EnemyEntity[];
+  worm: WormEnemy;
   projectiles: ProjectileEntity[];
-  enemyProjectiles: EnemyProjectileEntity[];
   orbs: OrbEntity[];
   specialPickups: SpecialPickupEntity[];
   floatingTexts: FloatingText[];
   movementInput: Vec2;
   fireTimer: number;
-  coneTimer: number;
-  shockwaveTimer: number;
   specialSpawnTimer: number;
   level: number;
   xp: number;
@@ -144,8 +132,53 @@ export function initialWeaponStats(): WeaponRuntimeStats {
   return { damage: 14, fireInterval: 0.58, projectileSpeed: 330, pierce: 0, spread: 0, count: 1, knockback: 8 };
 }
 
+function createWorm(state: { nextEntityId: number }): WormEnemy {
+  const path = buildPath([
+    vec2(-380, -760),
+    vec2(380, -760),
+    vec2(380, -520),
+    vec2(-380, -520),
+    vec2(-380, -260),
+    vec2(380, -260),
+    vec2(380, 20),
+    vec2(-380, 20),
+    vec2(-380, 300),
+    vec2(280, 300),
+    vec2(280, 560),
+  ]);
+
+  const segments: WormSegment[] = [];
+  const startSegments = 56;
+  for (let i = 0; i < startSegments; i += 1) {
+    const isElite = i % WORM_DEF.eliteEvery === 0;
+    segments.push({
+      id: state.nextEntityId + i,
+      hp: WORM_DEF.segmentHp,
+      maxHp: WORM_DEF.segmentHp,
+      radius: WORM_DEF.segmentRadius,
+      s: 0,
+      isElite,
+      hpDisplayTimer: isElite ? 999 : 0,
+    });
+  }
+
+  return {
+    headS: 90,
+    speed: WORM_DEF.headSpeed,
+    spacing: WORM_DEF.spacing,
+    goalS: path.totalLength - 6,
+    knockbackPerBreak: 16,
+    path,
+    segments,
+  };
+}
+
 export function createInitialState(seed: number): GameState {
   const stats = initialPlayerStats();
+  const playerLaneY = 760;
+  const stateSeed = { nextEntityId: 1 };
+  const worm = createWorm(stateSeed);
+
   return {
     worldSize: 2200,
     time: 0,
@@ -153,20 +186,18 @@ export function createInitialState(seed: number): GameState {
     speed: 1,
     cameraZoom: 0.78,
     seed,
-    player: { pos: vec2(0, 0), hp: stats.maxHp, contactTimer: 0 },
+    player: { pos: vec2(0, playerLaneY), hp: stats.maxHp, contactTimer: 0 },
+    playerLaneY,
     playerStats: stats,
     weaponStats: initialWeaponStats(),
     runWeaponBonuses: { extraShots: 0, cooldownMultiplier: 1, damageMultiplier: 1 },
-    enemies: [],
+    worm,
     projectiles: [],
-    enemyProjectiles: [],
     orbs: [],
     specialPickups: [],
     floatingTexts: [],
     movementInput: vec2(0, 0),
     fireTimer: 0,
-    coneTimer: 0,
-    shockwaveTimer: 0,
     specialSpawnTimer: 12,
     level: 1,
     xp: 0,
@@ -181,9 +212,9 @@ export function createInitialState(seed: number): GameState {
     pendingSpecialChoices: null,
     unlocks: { orbit: false, cone: false, shockwave: false },
     result: null,
-    nextEntityId: 1,
+    nextEntityId: stateSeed.nextEntityId + worm.segments.length,
     spawnAccumulator: 0,
-    spawnedCount: 0,
+    spawnedCount: worm.segments.length,
   };
 }
 

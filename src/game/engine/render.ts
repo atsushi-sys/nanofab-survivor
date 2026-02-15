@@ -1,4 +1,5 @@
 import { clamp } from './math';
+import { samplePath } from './path';
 import { GameState } from './state';
 
 export interface RenderOptions {
@@ -12,8 +13,8 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, w: n
   ctx.fillRect(0, 0, w, h);
 
   const zoom = state.cameraZoom;
-  const camX = state.player.pos.x;
-  const camY = state.player.pos.y;
+  const camX = 0;
+  const camY = state.player.pos.y - 280;
   const toScreenX = (x: number) => (x - camX) * zoom + w / 2;
   const toScreenY = (y: number) => (y - camY) * zoom + h / 2;
   const sr = (r: number) => r * zoom;
@@ -22,15 +23,19 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, w: n
   ctx.lineWidth = 1;
   for (let x = -1200; x <= 1200; x += 80) {
     ctx.beginPath();
-    ctx.moveTo(toScreenX(x), toScreenY(-1200));
-    ctx.lineTo(toScreenX(x), toScreenY(1200));
+    ctx.moveTo(toScreenX(x), toScreenY(-1400));
+    ctx.lineTo(toScreenX(x), toScreenY(1400));
     ctx.stroke();
   }
+
+  const goalPos = samplePath(state.worm.path, state.worm.goalS);
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(toScreenX(goalPos.x) - 50, toScreenY(goalPos.y) - 4, 100, 8);
 
   for (const p of state.specialPickups) {
     ctx.fillStyle = p.type === 'bigXp' ? '#facc15' : '#34d399';
     ctx.beginPath();
-    ctx.arc(toScreenX(p.pos.x), toScreenY(p.pos.y), sr(7), 0, Math.PI * 2);
+    ctx.arc(toScreenX(p.pos.x), toScreenY(p.pos.y), sr(8), 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -42,52 +47,36 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, w: n
   }
 
   for (const p of state.projectiles) {
-    ctx.fillStyle = '#fde047';
+    ctx.fillStyle = '#67e8f9';
     ctx.beginPath();
     ctx.arc(toScreenX(p.pos.x), toScreenY(p.pos.y), sr(p.radius), 0, Math.PI * 2);
     ctx.fill();
   }
 
-  for (const p of state.enemyProjectiles) {
-    ctx.fillStyle = '#fb7185';
+  for (let i = state.worm.segments.length - 1; i >= 0; i -= 1) {
+    const seg = state.worm.segments[i];
+    const pos = samplePath(state.worm.path, seg.s);
+    const sx = toScreenX(pos.x);
+    const sy = toScreenY(pos.y);
+
+    ctx.fillStyle = seg.isElite ? '#a855f7' : '#b45309';
     ctx.beginPath();
-    ctx.arc(toScreenX(p.pos.x), toScreenY(p.pos.y), sr(p.radius), 0, Math.PI * 2);
+    ctx.arc(sx, sy, sr(seg.radius), 0, Math.PI * 2);
     ctx.fill();
-  }
 
-  for (const e of state.enemies) {
-    const sx = toScreenX(e.pos.x);
-    const sy = toScreenY(e.pos.y);
-    ctx.fillStyle = e.color;
-    ctx.beginPath();
-    ctx.arc(sx, sy, sr(e.radius), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = i === 0 ? '#fef08a' : '#7c2d12';
+    ctx.stroke();
 
-    if (e.marker === 'fast') ctx.fillRect(sx - sr(2), sy - sr(e.radius) - sr(5), sr(4), sr(4));
-    if (e.marker === 'tank') {
-      ctx.beginPath();
-      ctx.arc(sx, sy, sr(3), 0, Math.PI * 2);
-      ctx.fill();
-    }
-    if (e.marker === 'ranged') {
-      ctx.beginPath();
-      ctx.moveTo(sx, sy - sr(e.radius + 4));
-      ctx.lineTo(sx - sr(4), sy - sr(e.radius + 10));
-      ctx.lineTo(sx + sr(4), sy - sr(e.radius + 10));
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    if (options.showEnemyHp && (e.hpDisplayTimer > 0 || e.isElite)) {
-      const hpText = `${Math.ceil(clamp(e.hp, 0, e.maxHp))}/${Math.ceil(e.maxHp)}`;
+    if (options.showEnemyHp && (seg.hpDisplayTimer > 0 || seg.isElite)) {
+      const hpText = `${Math.ceil(clamp(seg.hp, 0, seg.maxHp))}/${Math.ceil(seg.maxHp)}`;
       ctx.textAlign = 'center';
-      ctx.font = `${Math.max(10, sr(11))}px system-ui`;
+      ctx.font = `${Math.max(11, sr(11))}px system-ui`;
       ctx.lineWidth = 3;
       ctx.strokeStyle = '#020617';
-      ctx.strokeText(hpText, sx, sy - sr(e.radius + 12));
-      ctx.fillStyle = e.isElite ? '#fde68a' : '#e2e8f0';
-      ctx.fillText(hpText, sx, sy - sr(e.radius + 12));
+      ctx.strokeText(hpText, sx, sy - sr(seg.radius + 10));
+      ctx.fillStyle = seg.isElite ? '#f5d0fe' : '#ffffff';
+      ctx.fillText(hpText, sx, sy - sr(seg.radius + 10));
     }
   }
 

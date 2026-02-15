@@ -1,25 +1,19 @@
 export type Rarity = 'common' | 'rare' | 'epic';
 
-export interface EnemyDefinition {
+export interface WormDefinition {
   id: string;
   name: string;
-  hp: number;
-  speed: number;
-  damage: number;
-  radius: number;
+  segmentHp: number;
+  segmentRadius: number;
+  spacing: number;
+  headSpeed: number;
+  contactDamage: number;
   xpValue: number;
   coinValue: number;
   gemChance: number;
-  spawnWeightByTime: { start: number; end: number; weight: number }[];
-  color: string;
-  marker: 'none' | 'fast' | 'tank' | 'ranged';
-  behavior: 'chase' | 'ranged';
-  rangedAttack?: {
-    interval: number;
-    projectileSpeed: number;
-    projectileDamage: number;
-    preferredDistance: number;
-  };
+  normalColor: string;
+  eliteColor: string;
+  eliteEvery: number;
 }
 
 export interface WeaponDefinition {
