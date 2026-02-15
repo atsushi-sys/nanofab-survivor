@@ -7,10 +7,55 @@ function rarityByMagnitude(v: number): 'common' | 'rare' | 'epic' {
   return 'common';
 }
 
+function weightedPick(prng: PRNG, table: Array<{ value: number; weight: number }>): number {
+  const total = table.reduce((sum, item) => sum + item.weight, 0);
+  let roll = prng.next() * total;
+  for (const item of table) {
+    roll -= item.weight;
+    if (roll <= 0) return item.value;
+  }
+  return table[table.length - 1]?.value ?? 0;
+}
+
 export function generateSpecialBonusChoices(prng: PRNG): SpecialBonusChoice[] {
-  const shotAdd = prng.int(1, 10);
-  const cooldownReduction = 0.2 + prng.next() * 0.7;
-  const damageBonus = 0.2 + prng.next() * 4.8;
+  const shotAdd = weightedPick(prng, [
+    { value: 1, weight: 22 },
+    { value: 2, weight: 18 },
+    { value: 3, weight: 14 },
+    { value: 4, weight: 12 },
+    { value: 5, weight: 10 },
+    { value: 6, weight: 8 },
+    { value: 7, weight: 6 },
+    { value: 8, weight: 4 },
+    { value: 9, weight: 3 },
+    { value: 10, weight: 1.5 },
+  ]);
+
+  const cooldownReductionPct = weightedPick(prng, [
+    { value: 20, weight: 22 },
+    { value: 30, weight: 18 },
+    { value: 40, weight: 15 },
+    { value: 50, weight: 12 },
+    { value: 60, weight: 8 },
+    { value: 70, weight: 5 },
+    { value: 80, weight: 2.5 },
+    { value: 90, weight: 1.2 },
+  ]);
+
+  const damageBonusPct = weightedPick(prng, [
+    { value: 20, weight: 24 },
+    { value: 30, weight: 20 },
+    { value: 40, weight: 16 },
+    { value: 50, weight: 12 },
+    { value: 60, weight: 9 },
+    { value: 70, weight: 6 },
+    { value: 80, weight: 4 },
+    { value: 90, weight: 2 },
+    { value: 100, weight: 1 },
+  ]);
+
+  const cooldownReduction = cooldownReductionPct / 100;
+  const damageBonus = damageBonusPct / 100;
 
   return [
     {
@@ -22,19 +67,19 @@ export function generateSpecialBonusChoices(prng: PRNG): SpecialBonusChoice[] {
       addShots: shotAdd,
     },
     {
-      id: `cooldown-${Math.round(cooldownReduction * 100)}`,
+      id: `cooldown-${cooldownReductionPct}`,
       category: 'cooldown',
       label: 'クール短縮',
-      description: `発射間隔 ${Math.round(cooldownReduction * 100)}%短縮`,
+      description: `発射間隔 ${cooldownReductionPct}%短縮`,
       rarity: rarityByMagnitude(cooldownReduction),
       cooldownMul: Math.max(0.1, 1 - cooldownReduction),
     },
     {
-      id: `damage-${Math.round(damageBonus * 100)}`,
+      id: `damage-${damageBonusPct}`,
       category: 'damage',
       label: '火力増幅',
-      description: `与ダメ +${Math.round(damageBonus * 100)}%`,
-      rarity: rarityByMagnitude(Math.min(1, damageBonus / 5)),
+      description: `与ダメ +${damageBonusPct}%`,
+      rarity: rarityByMagnitude(damageBonus),
       damageMul: 1 + damageBonus,
     },
   ];
