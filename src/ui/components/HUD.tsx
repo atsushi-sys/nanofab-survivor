@@ -10,8 +10,10 @@ export interface HudDebugInfo {
   pickupCount: number;
   spawnAccumulator: number;
   zoom: number;
-  wormHpMultiplier: number;
+  hpGrowthRate: number;
   segmentsRemaining: number;
+  headSegmentHp: number;
+  tailSegmentHp: number;
   segmentDebug?: string[];
 }
 
@@ -53,7 +55,8 @@ export function HUD({ state, onPause, onSpeed, debugInfo }: Props) {
           <div>{debugInfo.running ? 'running' : 'stopped'} / {debugInfo.paused ? 'paused' : 'active'}</div>
           <div>elapsed {debugInfo.elapsedTimeSec.toFixed(2)}s / dt {debugInfo.lastDtMs.toFixed(2)}ms</div>
           <div>enemy {debugInfo.enemyCount} / projectile {debugInfo.projectileCount} / pickup {debugInfo.pickupCount}</div>
-          <div>remain {debugInfo.segmentsRemaining} / hpMult x{debugInfo.wormHpMultiplier.toFixed(2)}</div>
+          <div>remain {debugInfo.segmentsRemaining} / growth {debugInfo.hpGrowthRate.toFixed(3)}</div>
+          <div>headHP {debugInfo.headSegmentHp} / tailHP {debugInfo.tailSegmentHp}</div>
           <div>spawnAcc {debugInfo.spawnAccumulator.toFixed(3)} / zoom {debugInfo.zoom.toFixed(2)}</div>
           {debugInfo.segmentDebug?.map((line) => <div key={line}>{line}</div>)}
         </div>

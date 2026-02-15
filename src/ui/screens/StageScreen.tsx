@@ -1,5 +1,6 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { UPGRADES } from '../../game/data/upgrades';
+import { WORM_DEF } from '../../game/data/enemies';
 import { renderGame } from '../../game/engine/render';
 import { GameRuntime } from '../../game/engine/runtime';
 import { samplePath } from '../../game/engine/path';
@@ -75,8 +76,10 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
             pickupCount: rt.state.orbs.length + rt.state.specialPickups.length,
             spawnAccumulator: rt.state.spawnAccumulator,
             zoom: rt.state.cameraZoom,
-            wormHpMultiplier: rt.state.wormHpMultiplier,
+            hpGrowthRate: WORM_DEF.hpGrowthRate,
             segmentsRemaining: rt.state.worm.segments.length,
+            headSegmentHp: Math.floor(rt.state.worm.segments[0]?.hp ?? 0),
+            tailSegmentHp: Math.floor(rt.state.worm.segments[rt.state.worm.segments.length - 1]?.hp ?? 0),
             segmentDebug: rt.state.worm.segments.slice(0, 5).map((seg, i) => {
               const world = samplePath(rt.state.worm.path, seg.s);
               const camX = 0;

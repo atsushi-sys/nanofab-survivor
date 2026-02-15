@@ -3,7 +3,8 @@ export type Rarity = 'common' | 'rare' | 'epic';
 export interface WormDefinition {
   id: string;
   name: string;
-  segmentHp: number;
+  baseSegmentHp: number;
+  hpGrowthRate: number;
   segmentRadius: number;
   spacing: number;
   headSpeed: number;
@@ -15,9 +16,6 @@ export interface WormDefinition {
   eliteColor: string;
   eliteEvery: number;
   initialSegments: number;
-  eliteHpBonus: number;
-  hpScaleEveryKills: number;
-  hpScaleStep: number;
   clearRewardCoins: number;
 }
 
