@@ -32,6 +32,7 @@ export class GameRuntime {
     this.state.weaponStats.pierce = weapon.pierce;
     this.state.weaponStats.count = weapon.count;
     this.state.weaponStats.knockback = weapon.knockback;
+    this.state.weaponStats.parallelSpacing = weapon.parallelSpacing;
 
     this.state.playerStats.maxHp *= 1 + meta.hp * 0.05;
     this.state.playerStats.moveSpeed *= 1 + meta.move * 0.03;

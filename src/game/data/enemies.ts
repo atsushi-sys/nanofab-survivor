@@ -3,7 +3,7 @@ import { WormDefinition } from '../types';
 export const WORM_DEF: WormDefinition = {
   id: 'dust-crawler',
   name: 'ダストキャタピラ',
-  baseSegmentHp: 30,
+  baseSegmentHp: 150,
   hpGrowthRate: 1.055,
   segmentRadius: 16,
   spacing: 30,

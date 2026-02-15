@@ -19,6 +19,7 @@ export interface WormDefinition {
   clearRewardCoins: number;
 }
 
+
 export interface WeaponDefinition {
   id: string;
   name: string;
@@ -30,6 +31,7 @@ export interface WeaponDefinition {
   spread: number;
   count: number;
   knockback: number;
+  parallelSpacing: number;
 }
 
 export type UpgradeEffect =
@@ -68,6 +70,7 @@ export interface WeaponRuntimeStats {
   spread: number;
   count: number;
   knockback: number;
+  parallelSpacing: number;
 }
 
 export interface MetaUpgradeState {

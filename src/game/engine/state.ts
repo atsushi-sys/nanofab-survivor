@@ -130,7 +130,7 @@ export function initialPlayerStats(): PlayerStats {
 }
 
 export function initialWeaponStats(): WeaponRuntimeStats {
-  return { damage: 14, fireInterval: 0.58, projectileSpeed: 330, pierce: 0, spread: 0, count: 1, knockback: 8 };
+  return { damage: 14, fireInterval: 0.58, projectileSpeed: 330, pierce: 0, spread: 0, count: 1, knockback: 8, parallelSpacing: 10 };
 }
 
 function createWorm(state: { nextEntityId: number }): WormEnemy {

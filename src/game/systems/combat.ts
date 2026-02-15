@@ -31,16 +31,19 @@ export function updateCombat(state: GameState, dt: number, prng: PRNG): void {
 
 function fireUpward(state: GameState, prng: PRNG): void {
   const totalShots = state.weaponStats.count + state.runWeaponBonuses.extraShots;
+  const dir = { x: 0, y: -1 };
+  const perp = { x: 1, y: 0 };
+  const spacing = state.weaponStats.parallelSpacing;
+
   for (let i = 0; i < totalShots; i += 1) {
-    const spread = (i - (totalShots - 1) / 2) * 0.12 + (prng.next() - 0.5) * 0.05;
-    const angle = -Math.PI / 2 + spread;
+    const offset = (i - (totalShots - 1) / 2) * spacing;
     const crit = prng.next() < state.playerStats.critChance;
     const damage = state.weaponStats.damage * (1 + state.playerStats.damageBonus) * state.runWeaponBonuses.damageMultiplier * (crit ? state.playerStats.critDamage : 1);
 
     state.projectiles.push({
       id: state.nextEntityId++,
-      pos: { ...state.player.pos },
-      vel: { x: Math.cos(angle) * state.weaponStats.projectileSpeed, y: Math.sin(angle) * state.weaponStats.projectileSpeed },
+      pos: { x: state.player.pos.x + perp.x * offset, y: state.player.pos.y + perp.y * offset },
+      vel: { x: dir.x * state.weaponStats.projectileSpeed, y: dir.y * state.weaponStats.projectileSpeed },
       damage,
       radius: state.weaponStats.count > 5 ? 3 : 4,
       pierceLeft: state.weaponStats.pierce,

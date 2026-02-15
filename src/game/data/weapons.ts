@@ -12,5 +12,6 @@ export const WEAPONS: WeaponDefinition[] = [
     spread: 0,
     count: 1,
     knockback: 8,
+    parallelSpacing: 10,
   },
 ];
