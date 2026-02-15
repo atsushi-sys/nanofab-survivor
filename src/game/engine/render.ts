@@ -14,34 +14,34 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, w: n
   ctx.fillStyle = '#0b1220';
   ctx.fillRect(0, 0, w, h);
 
-  const defendLineY = h * STAGE_DEFEND_CONFIG.defendLineRatio;
-  const defendZoneHeight = h * STAGE_DEFEND_CONFIG.defendZoneHeightRatio;
-
-  ctx.fillStyle = 'rgba(255, 60, 60, 0.15)';
-  ctx.fillRect(0, defendLineY, w, defendZoneHeight);
-
-  ctx.strokeStyle = 'rgba(255, 80, 80, 0.9)';
-  ctx.lineWidth = 5;
-  ctx.beginPath();
-  ctx.moveTo(0, defendLineY);
-  ctx.lineTo(w, defendLineY);
-  ctx.stroke();
-
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.font = '12px system-ui';
-  ctx.fillStyle = 'rgba(255,255,255,0.92)';
-  ctx.shadowColor = 'rgba(0,0,0,0.45)';
-  ctx.shadowBlur = 3;
-  ctx.fillText('DEFEND LINE', w / 2, defendLineY - 8);
-  ctx.restore();
-
   const zoom = state.cameraZoom;
   const camX = 0;
   const camY = state.player.pos.y - 420;
   const toScreenX = (x: number) => (x - camX) * zoom + w / 2;
   const toScreenY = (y: number) => (y - camY) * zoom + h / 2;
   const sr = (r: number) => r * zoom;
+
+  const defendLineScreenY = toScreenY(state.defendLineWorldY);
+  const defendZoneHeightScreen = sr(STAGE_DEFEND_CONFIG.defendZoneHeightWorld);
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 60, 60, 0.15)';
+  ctx.fillRect(0, defendLineScreenY, w, defendZoneHeightScreen);
+
+  ctx.strokeStyle = 'rgba(255, 80, 80, 0.9)';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(0, defendLineScreenY);
+  ctx.lineTo(w, defendLineScreenY);
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.font = '12px system-ui';
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.shadowColor = 'rgba(0,0,0,0.45)';
+  ctx.shadowBlur = 3;
+  ctx.fillText('DEFEND LINE', w / 2, defendLineScreenY - 8);
+  ctx.restore();
 
   ctx.strokeStyle = '#334155';
   ctx.lineWidth = 1;

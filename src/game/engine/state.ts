@@ -1,4 +1,5 @@
 import { WORM_DEF } from '../data/enemies';
+import { STAGE_DEFEND_CONFIG } from '../data/stage';
 import { PlayerStats, WeaponRuntimeStats } from '../types';
 import { buildPath, PathCache } from './path';
 import { vec2, Vec2 } from './math';
@@ -120,6 +121,7 @@ export interface GameState {
   result: null | 'win' | 'lose';
   resultReason: string | null;
   defendLineWorldY: number;
+  headWorldY: number;
   nextEntityId: number;
   spawnAccumulator: number;
   spawnedCount: number;
@@ -215,7 +217,8 @@ export function createInitialState(seed: number): GameState {
     unlocks: { orbit: false, cone: false, shockwave: false },
     result: null,
     resultReason: null,
-    defendLineWorldY: Number.POSITIVE_INFINITY,
+    defendLineWorldY: playerLaneY + STAGE_DEFEND_CONFIG.defendOffsetWorld,
+    headWorldY: Number.NEGATIVE_INFINITY,
     nextEntityId: stateSeed.nextEntityId + worm.segments.length,
     spawnAccumulator: 0,
     spawnedCount: worm.segments.length,

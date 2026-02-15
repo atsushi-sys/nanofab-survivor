@@ -11,14 +11,12 @@ export function updateSpawner(state: GameState, dt: number, _prng: PRNG): void {
 
   if (state.worm.segments.length > 0) {
     const headPos = samplePath(state.worm.path, state.worm.segments[0].s);
+    state.headWorldY = headPos.y;
     if (headPos.y >= state.defendLineWorldY) {
       state.result = 'lose';
       state.resultReason = 'Head Breach';
     }
-  }
-
-  if (state.worm.headS >= state.worm.goalS) {
-    state.result = 'lose';
-    state.resultReason = 'Head Breach';
+  } else {
+    state.headWorldY = Number.NEGATIVE_INFINITY;
   }
 }

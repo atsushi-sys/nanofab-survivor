@@ -1,4 +1,4 @@
 export const STAGE_DEFEND_CONFIG = {
-  defendLineRatio: 0.82,
-  defendZoneHeightRatio: 0.06,
+  defendOffsetWorld: -160,
+  defendZoneHeightWorld: 92,
 } as const;

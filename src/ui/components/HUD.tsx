@@ -14,6 +14,10 @@ export interface HudDebugInfo {
   segmentsRemaining: number;
   headSegmentHp: number;
   tailSegmentHp: number;
+  playerWorldY: number;
+  defendLineWorldY: number;
+  headWorldY: number;
+  headDeltaToLine: number;
   segmentDebug?: string[];
 }
 
@@ -57,6 +61,8 @@ export function HUD({ state, onPause, onSpeed, debugInfo }: Props) {
           <div>enemy {debugInfo.enemyCount} / projectile {debugInfo.projectileCount} / pickup {debugInfo.pickupCount}</div>
           <div>remain {debugInfo.segmentsRemaining} / growth {debugInfo.hpGrowthRate.toFixed(3)}</div>
           <div>headHP {debugInfo.headSegmentHp} / tailHP {debugInfo.tailSegmentHp}</div>
+          <div>playerY {debugInfo.playerWorldY.toFixed(1)} / defendY {debugInfo.defendLineWorldY.toFixed(1)}</div>
+          <div>headY {debugInfo.headWorldY.toFixed(1)} / Δ {debugInfo.headDeltaToLine.toFixed(1)}</div>
           <div>spawnAcc {debugInfo.spawnAccumulator.toFixed(3)} / zoom {debugInfo.zoom.toFixed(2)}</div>
           {debugInfo.segmentDebug?.map((line) => <div key={line}>{line}</div>)}
         </div>
