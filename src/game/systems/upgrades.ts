@@ -38,8 +38,4 @@ export function applyUpgrade(state: GameState, upgradeId: string): void {
       state.unlocks[effect.unlock] = true;
     }
   }
-
-  if (state.player.hp > state.playerStats.maxHp) {
-    state.player.hp = state.playerStats.maxHp;
-  }
 }

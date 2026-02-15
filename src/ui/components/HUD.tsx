@@ -32,8 +32,8 @@ export function HUD({ state, onPause, onSpeed, debugInfo }: Props) {
     <div className="hud-wrap">
       <div className="hud-top">
         <div>
-          <div>HP {Math.ceil(state.player.hp)}/{Math.ceil(state.playerStats.maxHp)}</div>
-          <div className="bar"><span style={{ width: `${(state.player.hp / state.playerStats.maxHp) * 100}%` }} /></div>
+          <div>防衛ライン監視</div>
+          <div className="bar"><span style={{ width: `${Math.min(100, (state.time / 300) * 100)}%` }} /></div>
         </div>
         <div className="timer">{mm}:{ss}</div>
         <div>

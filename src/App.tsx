@@ -7,7 +7,7 @@ import { loadMeta, saveMeta } from './storage/meta';
 import { MetaUpgradeState } from './game/types';
 
 type Screen = 'title' | 'stage' | 'result' | 'meta';
-interface ResultData { win: boolean; time: number; level: number; kills: number; coins: number; gems: number; seed: number }
+interface ResultData { win: boolean; time: number; level: number; kills: number; coins: number; gems: number; seed: number; segmentsRemaining: number; reason: string | null }
 
 export default function App() {
   const [meta, setMeta] = useState<MetaUpgradeState>(loadMeta());

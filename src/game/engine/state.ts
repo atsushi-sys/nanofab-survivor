@@ -5,8 +5,6 @@ import { vec2, Vec2 } from './math';
 
 export interface PlayerEntity {
   pos: Vec2;
-  hp: number;
-  contactTimer: number;
 }
 
 export interface WormSegment {
@@ -120,6 +118,8 @@ export interface GameState {
   pendingSpecialChoices: SpecialBonusChoice[] | null;
   unlocks: RuntimeUnlocks;
   result: null | 'win' | 'lose';
+  resultReason: string | null;
+  defendLineWorldY: number;
   nextEntityId: number;
   spawnAccumulator: number;
   spawnedCount: number;
@@ -187,7 +187,7 @@ export function createInitialState(seed: number): GameState {
     speed: 1,
     cameraZoom: 0.78,
     seed,
-    player: { pos: vec2(0, playerLaneY), hp: stats.maxHp, contactTimer: 0 },
+    player: { pos: vec2(0, playerLaneY) },
     playerLaneY,
     playerStats: stats,
     weaponStats: initialWeaponStats(),
@@ -214,6 +214,8 @@ export function createInitialState(seed: number): GameState {
     pendingSpecialChoices: null,
     unlocks: { orbit: false, cone: false, shockwave: false },
     result: null,
+    resultReason: null,
+    defendLineWorldY: Number.POSITIVE_INFINITY,
     nextEntityId: stateSeed.nextEntityId + worm.segments.length,
     spawnAccumulator: 0,
     spawnedCount: worm.segments.length,

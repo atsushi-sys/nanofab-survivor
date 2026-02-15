@@ -1,6 +1,7 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { UPGRADES } from '../../game/data/upgrades';
 import { WORM_DEF } from '../../game/data/enemies';
+import { STAGE_DEFEND_CONFIG } from '../../game/data/stage';
 import { renderGame } from '../../game/engine/render';
 import { GameRuntime } from '../../game/engine/runtime';
 import { samplePath } from '../../game/engine/path';
@@ -14,7 +15,7 @@ import { UpgradeModal } from '../components/UpgradeModal';
 interface Props {
   seed: number;
   meta: MetaUpgradeState;
-  onFinish: (result: { win: boolean; time: number; level: number; kills: number; coins: number; gems: number; seed: number }) => void;
+  onFinish: (result: { win: boolean; time: number; level: number; kills: number; coins: number; gems: number; seed: number; segmentsRemaining: number; reason: string | null }) => void;
 }
 
 export function StageScreen({ seed, meta, onFinish }: Props) {
@@ -35,7 +36,7 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
     const runtime = new GameRuntime(seed, meta, {
       onState: (nextState) => setState({ ...nextState }),
       onUpgradeOffer: (nextChoices) => setChoices(nextChoices),
-      onResult: (resultState) => onFinish({ win: resultState.result === 'win', time: resultState.time, level: resultState.level, kills: resultState.kills, coins: resultState.runCoins, gems: resultState.runGems, seed: resultState.seed }),
+      onResult: (resultState) => onFinish({ win: resultState.result === 'win', time: resultState.time, level: resultState.level, kills: resultState.kills, coins: resultState.runCoins, gems: resultState.runGems, seed: resultState.seed, segmentsRemaining: resultState.worm.segments.length, reason: resultState.resultReason }),
     });
 
     runtimeRef.current = runtime;
@@ -92,6 +93,10 @@ export function StageScreen({ seed, meta, onFinish }: Props) {
         }
 
         if (canvas) {
+          const camY = rt.state.player.pos.y - 420;
+          const defendLineY = canvas.height * STAGE_DEFEND_CONFIG.defendLineRatio;
+          rt.state.defendLineWorldY = (defendLineY - canvas.height / 2) / rt.state.cameraZoom + camY;
+
           const ctx = canvas.getContext('2d');
           if (ctx) renderGame(ctx, rt.state, canvas.width, canvas.height, { showEnemyHp: showEnemyHpRef.current, showDamageText: showDamageTextRef.current, showPathDebug: showPathDebugRef.current });
         }

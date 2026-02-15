@@ -34,11 +34,9 @@ export class GameRuntime {
     this.state.weaponStats.knockback = weapon.knockback;
     this.state.weaponStats.parallelSpacing = weapon.parallelSpacing;
 
-    this.state.playerStats.maxHp *= 1 + meta.hp * 0.05;
     this.state.playerStats.moveSpeed *= 1 + meta.move * 0.03;
     this.state.playerStats.damageBonus += meta.damage * 0.04;
     this.state.playerStats.xpGain += meta.xp * 0.05;
-    this.state.player.hp = this.state.playerStats.maxHp;
 
     this.state.paused = false;
     this.state.speed = this.state.speed === 2 ? 2 : 1;

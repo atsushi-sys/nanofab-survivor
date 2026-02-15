@@ -1,6 +1,7 @@
 import { clamp } from './math';
 import { samplePath } from './path';
 import { GameState } from './state';
+import { STAGE_DEFEND_CONFIG } from '../data/stage';
 
 export interface RenderOptions {
   showEnemyHp: boolean;
@@ -12,6 +13,28 @@ export function renderGame(ctx: CanvasRenderingContext2D, state: GameState, w: n
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = '#0b1220';
   ctx.fillRect(0, 0, w, h);
+
+  const defendLineY = h * STAGE_DEFEND_CONFIG.defendLineRatio;
+  const defendZoneHeight = h * STAGE_DEFEND_CONFIG.defendZoneHeightRatio;
+
+  ctx.fillStyle = 'rgba(255, 60, 60, 0.15)';
+  ctx.fillRect(0, defendLineY, w, defendZoneHeight);
+
+  ctx.strokeStyle = 'rgba(255, 80, 80, 0.9)';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(0, defendLineY);
+  ctx.lineTo(w, defendLineY);
+  ctx.stroke();
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = '12px system-ui';
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.shadowColor = 'rgba(0,0,0,0.45)';
+  ctx.shadowBlur = 3;
+  ctx.fillText('DEFEND LINE', w / 2, defendLineY - 8);
+  ctx.restore();
 
   const zoom = state.cameraZoom;
   const camX = 0;
